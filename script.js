@@ -40,11 +40,15 @@ noBtn.addEventListener('click', function(e) {
         const currentScale = 1 + (noClickCount * 0.1);
         yesBtn.style.transform = `scale(${currentScale})`;
     } else {
-        // After 10 clicks, convert the No button to Yes
+        // After 10 clicks, convert the No button to Yes and hide the original Yes button
+        yesBtn.style.display = 'none';
         noBtn.textContent = "Yes! 💗";
         noBtn.classList.remove('no-btn');
+        noBtn.classList.remove('moving');
         noBtn.classList.add('yes-btn');
         noBtn.style.position = 'relative';
+        noBtn.style.left = '';
+        noBtn.style.top = '';
         noBtn.style.transform = 'scale(1)';
         message.textContent = "I knew you'd come around! 😍";
         
@@ -54,23 +58,49 @@ noBtn.addEventListener('click', function(e) {
 });
 
 function moveButton() {
-    const container = document.querySelector('.buttons-container');
-    const containerRect = container.getBoundingClientRect();
-    
-    // Add the moving class for absolute positioning
+    // Add the moving class for fixed positioning
     noBtn.classList.add('moving');
     
-    // Calculate random position within the container
-    const maxX = containerRect.width - noBtn.offsetWidth - 40;
-    const maxY = containerRect.height - noBtn.offsetHeight;
+    const padding = 20; // Minimum distance from edges
+    const minDistanceFromYes = 150; // Minimum distance from Yes button
+    let newX, newY;
+    let attempts = 0;
+    let validPosition = false;
     
-    // Generate random positions
-    const randomX = Math.random() * maxX - (maxX / 2);
-    const randomY = Math.random() * maxY - (maxY / 2);
+    // Get Yes button position
+    const yesRect = yesBtn.getBoundingClientRect();
+    const noWidth = noBtn.offsetWidth;
+    const noHeight = noBtn.offsetHeight;
+    
+    // Keep trying until we find a position that doesn't overlap
+    while (!validPosition && attempts < 50) {
+        // Generate random position within viewport
+        newX = padding + Math.random() * (window.innerWidth - noWidth - padding * 2);
+        newY = padding + Math.random() * (window.innerHeight - noHeight - padding * 2);
+        
+        // Calculate center points
+        const noCenterX = newX + noWidth / 2;
+        const noCenterY = newY + noHeight / 2;
+        const yesCenterX = yesRect.left + yesRect.width / 2;
+        const yesCenterY = yesRect.top + yesRect.height / 2;
+        
+        // Calculate distance between centers
+        const distance = Math.sqrt(
+            Math.pow(noCenterX - yesCenterX, 2) + 
+            Math.pow(noCenterY - yesCenterY, 2)
+        );
+        
+        // Check if position is valid (far enough from Yes button)
+        if (distance > minDistanceFromYes) {
+            validPosition = true;
+        }
+        
+        attempts++;
+    }
     
     // Apply the new position
-    noBtn.style.left = `calc(50% + ${randomX}px)`;
-    noBtn.style.top = `${randomY}px`;
+    noBtn.style.left = `${newX}px`;
+    noBtn.style.top = `${newY}px`;
 }
 
 function showCelebration() {
